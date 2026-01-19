@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, ArrowRight, AlertCircle, UserCheck, User, Church, UserCheck2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -79,20 +79,17 @@ export function Login() {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
             <div className="w-full max-w-md space-y-8">
-                <div className="text-center space-y-2">
-                    <div className="h-12 w-12 bg-blue-600 rounded-xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-blue-200">
-                        <Lock className="text-white h-6 w-6" />
-                    </div>
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">Connexion Admin</h1>
-                    <p className="text-slate-500">Accédez au tableau de bord de gestion</p>
-                </div>
+
 
                 <Card className="border-slate-200 shadow-xl">
                     <CardHeader className="space-y-1">
-                        <CardTitle className="text-xl">Authentification</CardTitle>
-                        <CardDescription>
-                            Entrez vos identifiants pour continuer
-                        </CardDescription>
+                        <div className="text-center space-y-2">
+                            <div className="h-12 w-12 bg-blue-600 rounded-xl mx-auto flex items-center justify-center mb-4 shadow-lg shadow-blue-200">
+                                <UserCheck2 className="text-white h-6 w-6" />
+                            </div>
+                            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Connectez-vous à votre compte</h1>
+                            <p className="text-slate-500">Connectez-vous en entrant vos identifiants</p>
+                        </div>
                     </CardHeader>
                     <form onSubmit={handleLogin}>
                         <CardContent className="space-y-4">
@@ -153,11 +150,10 @@ export function Login() {
                             </Button>
                         </CardFooter>
                     </form>
+                    <p className="text-center text-sm text-slate-500 mb-5">
+                        <a href="/" className="hover:text-blue-600 transition-colors">Retour à l'accueil</a>
+                    </p>
                 </Card>
-
-                <p className="text-center text-sm text-slate-500">
-                    <a href="/" className="hover:text-blue-600 transition-colors">Retour à l'accueil</a>
-                </p>
             </div>
         </div>
     );

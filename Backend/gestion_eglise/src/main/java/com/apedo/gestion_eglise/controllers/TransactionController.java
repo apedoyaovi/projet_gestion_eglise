@@ -31,4 +31,9 @@ public class TransactionController {
     public Map<String, Object> getStats() {
         return transactionService.getTreasuryStatistics();
     }
+
+    @GetMapping("/monthly-stats")
+    public List<Map<String, Object>> getMonthlyStats() {
+        return transactionService.getMonthlyStats();
+    }
 }

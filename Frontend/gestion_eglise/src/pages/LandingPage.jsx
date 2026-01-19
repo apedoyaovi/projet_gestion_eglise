@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Calendar, User, ArrowRight, Menu, X, LogIn, MapPin, Clock, Mail, Phone, MapPin as MapPinIcon } from 'lucide-react';
+import { Calendar, User, ArrowRight, Menu, X, LogIn, MapPin, Clock, Mail, Phone, MapPin as MapPinIcon, UserCheck, LockIcon, Lock} from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -85,9 +85,9 @@ export function LandingPage() {
                             <a href="#contact" className="text-slate-700 hover:text-blue-700 font-medium transition-colors text-sm">Contact</a>
                             <Button
                                 onClick={() => navigate('/login')}
-                                className="bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white rounded-full px-6 py-5 text-sm shadow hover:shadow-md transition-all"
+                                className="bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white rounded-full px-6 py-3 text-sm shadow hover:shadow-md transition-all"
                             >
-                                <LogIn className="mr-2 h-4 w-4" /> Admin
+                              <LockIcon className="mr-1.5 h-3.5 w-3.5"/> Connexion
                             </Button>
                         </div>
 
@@ -409,13 +409,13 @@ export function LandingPage() {
                         </div>
 
                         <div>
-                            <h4 className="font-bold text-white text-sm mb-4">Administration</h4>
+                            <h4 className="font-bold text-white text-sm mb-4">Connectez-vous</h4>
                             <Button
                                 onClick={() => navigate('/login')}
                                 size="sm"
                                 className="bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs"
                             >
-                                <LogIn className="mr-1.5 h-3.5 w-3.5" /> Espace Admin
+                              <LockIcon className="mr-1.5 h-3.5 w-3.5"/> Connexion
                             </Button>
                         </div>
                     </div>

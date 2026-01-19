@@ -18,4 +18,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.type = :type AND t.account = :account")
     Double sumAmountByTypeAndAccount(TransactionType type, AccountType account);
+
+    @Query("SELECT MONTH(t.date) as month, YEAR(t.date) as year, SUM(t.amount) as total " +
+            "FROM Transaction t " +
+            "WHERE t.type = :type " +
+            "GROUP BY YEAR(t.date), MONTH(t.date) " +
+            "ORDER BY year DESC, month DESC")
+    List<Object[]> sumAmountByMonth(TransactionType type);
 }

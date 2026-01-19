@@ -5,14 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-const chartData = [
-    { name: 'Jan', income: 4000, expense: 2400 },
-    { name: 'Feb', income: 3000, expense: 1398 },
-    { name: 'Mar', income: 2000, expense: 9800 },
-    { name: 'Apr', income: 2780, expense: 3908 },
-    { name: 'May', income: 1890, expense: 4800 },
-    { name: 'Jun', income: 2390, expense: 3800 },
-];
+
 
 export function Dashboard() {
     const navigate = useNavigate();
@@ -24,6 +17,7 @@ export function Dashboard() {
         children: 0,
         newThisMonth: 0
     });
+    const [chartData, setChartData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -37,22 +31,36 @@ export function Dashboard() {
                     return;
                 }
 
-                const [membersRes, eventsRes, statsRes] = await Promise.all([
-                    fetch('http://localhost:8080/api/members', {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    }),
-                    fetch('http://localhost:8080/api/events', {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    }),
-                    fetch('http://localhost:8080/api/transactions/stats', {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    })
+                const fetchWithAuth = (url) => fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const [membersRes, eventsRes, statsRes, monthlyStatsRes] = await Promise.all([
+                    fetchWithAuth('http://localhost:8080/api/members'),
+                    fetchWithAuth('http://localhost:8080/api/events'),
+                    fetchWithAuth('http://localhost:8080/api/transactions/stats'),
+                    fetchWithAuth('http://localhost:8080/api/transactions/monthly-stats')
                 ]);
+
+                console.log("Stats API responses:", {
+                    members: membersRes.status,
+                    events: eventsRes.status,
+                    stats: statsRes.status,
+                    monthly: monthlyStatsRes.status
+                });
 
                 if (membersRes.ok && eventsRes.ok && statsRes.ok) {
                     const members = await membersRes.json();
                     const events = await eventsRes.json();
                     const treasuryStats = await statsRes.json();
+
+                    let monthlyStats = [];
+                    if (monthlyStatsRes.ok) {
+                        monthlyStats = await monthlyStatsRes.json();
+                        console.log("Monthly Stats data:", monthlyStats);
+                    } else {
+                        console.warn("Monthly stats endpoint failed with status:", monthlyStatsRes.status);
+                    }
 
                     const now = new Date();
                     const currentMonth = now.getMonth();
@@ -82,25 +90,19 @@ export function Dashboard() {
                         return acc;
                     }, { totalMembers: 0, men: 0, women: 0, youth: 0, children: 0, newThisMonth: 0 });
 
-                    // Event Stats
-                    const upcomingEvents = events
-                        .filter(e => new Date(e.date) >= now)
-                        .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-                    const eventsThisMonth = events.filter(e => {
-                        const d = new Date(e.date);
-                        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-                    }).length;
-
                     setStats({
                         ...mStats,
                         totalEvents: events.length,
-                        upcomingEvents: upcomingEvents.slice(0, 3),
-                        eventsThisMonth,
+                        upcomingEvents: [],
+                        eventsThisMonth: 0,
                         totalIncome: treasuryStats.totalIncome,
                         totalExpense: treasuryStats.totalExpense,
                         totalBalance: treasuryStats.totalBalance
                     });
+
+                    setChartData(monthlyStats);
+                } else {
+                    console.error("One or more required stats endpoints failed.");
                 }
             } catch (error) {
                 console.error("Dashboard stats error:", error);
@@ -193,8 +195,8 @@ export function Dashboard() {
                                 <BarChart data={chartData}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} dy={10} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} dx={-10} tickFormatter={(value) => `${value}€`} />
-                                    <Tooltip cursor={{ fill: '#F1F5F9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#94A3B8', fontSize: 12 }} dx={-10} tickFormatter={(value) => `${value} FCFA`} />
+                                    <Tooltip cursor={{ fill: '#F1F5F9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value) => [`${value} FCFA`]} />
                                     <Bar dataKey="income" fill="#10B981" radius={[4, 4, 0, 0]} name="Recettes" barSize={20} />
                                     <Bar dataKey="expense" fill="#F43F5E" radius={[4, 4, 0, 0]} name="Dépenses" barSize={20} />
                                 </BarChart>
