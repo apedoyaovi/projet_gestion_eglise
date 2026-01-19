@@ -29,6 +29,9 @@ public class MemberController {
 
     @PostMapping
     public Member createMember(@Valid @RequestBody Member member) {
+        String currentUser = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        member.setAddedBy(currentUser);
         return memberService.saveMember(member);
     }
 
@@ -61,6 +64,7 @@ public class MemberController {
     }
 
     @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteMember(@PathVariable Long id) {
         return memberService.getMemberById(id)
                 .map(member -> {
@@ -71,6 +75,7 @@ public class MemberController {
     }
 
     @PostMapping("/bulk-delete")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteMembers(@RequestBody List<Long> ids) {
         try {
             memberService.deleteAllMembers(ids);

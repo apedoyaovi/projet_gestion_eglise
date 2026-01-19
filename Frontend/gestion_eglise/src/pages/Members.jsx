@@ -23,6 +23,9 @@ export function Members() {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedIds, setSelectedIds] = useState([]);
     const [visibleCount, setVisibleCount] = useState(5);
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'ROLE_ADMIN';
 
     useEffect(() => {
         const fetchMembers = async () => {
@@ -223,19 +226,22 @@ export function Members() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-slate-50/50">
-                                        <TableHead className="w-[50px]">
-                                            <input
-                                                type="checkbox"
-                                                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
-                                                checked={filteredMembers.length > 0 && selectedIds.length === filteredMembers.length}
-                                                onChange={toggleSelectAll}
-                                            />
-                                        </TableHead>
+                                        {isAdmin && (
+                                            <TableHead className="w-[50px]">
+                                                <input
+                                                    type="checkbox"
+                                                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                                                    checked={filteredMembers.length > 0 && selectedIds.length === filteredMembers.length}
+                                                    onChange={toggleSelectAll}
+                                                />
+                                            </TableHead>
+                                        )}
                                         <TableHead className="font-bold text-slate-700">Matricule</TableHead>
                                         <TableHead className="font-bold text-slate-700">Nom & Prénoms</TableHead>
                                         <TableHead className="font-bold text-slate-700">Groupe</TableHead>
                                         <TableHead className="font-bold text-slate-700">Contact</TableHead>
                                         <TableHead className="font-bold text-slate-700">Statut</TableHead>
+                                        <TableHead className="font-bold text-slate-700">Auteur</TableHead>
                                         <TableHead className="text-right font-bold text-slate-700">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -249,14 +255,16 @@ export function Members() {
                                     ) : (
                                         displayedMembers.map((member) => (
                                             <TableRow key={member.id} className={selectedIds.includes(member.id) ? 'bg-blue-50/30' : ''}>
-                                                <TableCell>
-                                                    <input
-                                                        type="checkbox"
-                                                        className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
-                                                        checked={selectedIds.includes(member.id)}
-                                                        onChange={() => toggleSelect(member.id)}
-                                                    />
-                                                </TableCell>
+                                                {isAdmin && (
+                                                    <TableCell>
+                                                        <input
+                                                            type="checkbox"
+                                                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                                                            checked={selectedIds.includes(member.id)}
+                                                            onChange={() => toggleSelect(member.id)}
+                                                        />
+                                                    </TableCell>
+                                                )}
                                                 <TableCell className="font-medium text-blue-700">{member.matricule || '---'}</TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col">
@@ -274,13 +282,16 @@ export function Members() {
                                                         {member.status || 'Inconnu'}
                                                     </span>
                                                 </TableCell>
+                                                <TableCell className="text-xs text-slate-400 font-bold">{member.addedBy || '---'}</TableCell>
                                                 <TableCell className="text-right">
                                                     <div className="flex justify-end gap-1">
                                                         <Button variant="ghost" size="sm" className="h-8 text-slate-600 hover:text-blue-600 hover:bg-blue-50" onClick={() => navigate(`/members/${member.id}`)}>Détails</Button>
                                                         <Button variant="ghost" size="sm" className="h-8 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50" onClick={() => navigate(`/members/edit/${member.id}`)}>Modifier</Button>
-                                                        <Button variant="ghost" size="sm" className="h-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50" onClick={() => handleDelete(member.id)}>
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
+                                                        {isAdmin && (
+                                                            <Button variant="ghost" size="sm" className="h-8 text-slate-400 hover:text-rose-600 hover:bg-rose-50" onClick={() => handleDelete(member.id)}>
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -302,7 +313,7 @@ export function Members() {
                         </Button>
                     </div>
                 )}
-                {selectedIds.length > 0 && (
+                {selectedIds.length > 0 && isAdmin && (
                     <CardFooter className="bg-slate-50 border-t py-4 flex items-center justify-between animate-in fade-in duration-300">
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-bold text-slate-700">{selectedIds.length} membres sélectionnés</span>

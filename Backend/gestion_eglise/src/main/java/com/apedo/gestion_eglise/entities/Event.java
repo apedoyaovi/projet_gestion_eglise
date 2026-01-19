@@ -47,4 +47,5 @@ public class Event {
     private java.util.List<String> images = new java.util.ArrayList<>();
 
     private Integer photoCount = 0;
+    private String addedBy;
 }

@@ -34,6 +34,9 @@ export function EventDetails() {
     const navigate = useNavigate();
     const [event, setEvent] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'ROLE_ADMIN';
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -129,10 +132,12 @@ export function EventDetails() {
                         <Edit className="mr-2 h-4 w-4" />
                         Modifier
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleDelete} className="text-red-600 hover:text-white hover:bg-red-600 border-red-100 font-bold transition-all">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Supprimer
-                    </Button>
+                    {isAdmin && (
+                        <Button variant="outline" size="sm" onClick={handleDelete} className="text-red-600 hover:text-white hover:bg-red-600 border-red-100 font-bold transition-all">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Supprimer
+                        </Button>
+                    )}
                 </div>
             </div>
 

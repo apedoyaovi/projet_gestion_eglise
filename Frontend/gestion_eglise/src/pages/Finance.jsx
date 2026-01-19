@@ -269,6 +269,7 @@ export function Finance() {
                                     <TableHead>Date</TableHead>
                                     <TableHead>Libellé</TableHead>
                                     <TableHead className="text-right">Montant</TableHead>
+                                    <TableHead className="text-right">Auteur</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -278,6 +279,7 @@ export function Finance() {
                                             <TableCell>{item.date}</TableCell>
                                             <TableCell>{item.category}</TableCell>
                                             <TableCell className="text-right font-medium text-green-600">+{formatAmount(item.amount)}</TableCell>
+                                            <TableCell className="text-right text-[10px] text-slate-400 font-bold">{item.addedBy || '---'}</TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
@@ -327,6 +329,7 @@ export function Finance() {
                                     <TableHead>Date</TableHead>
                                     <TableHead>Désignation</TableHead>
                                     <TableHead className="text-right">Montant</TableHead>
+                                    <TableHead className="text-right">Auteur</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -336,6 +339,7 @@ export function Finance() {
                                             <TableCell>{item.date}</TableCell>
                                             <TableCell>{item.description}</TableCell>
                                             <TableCell className="text-right font-medium text-red-600">-{formatAmount(item.amount)}</TableCell>
+                                            <TableCell className="text-right text-[10px] text-slate-400 font-bold">{item.addedBy || '---'}</TableCell>
                                         </TableRow>
                                     ))
                                 ) : (

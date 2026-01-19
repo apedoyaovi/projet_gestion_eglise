@@ -40,6 +40,11 @@ export function Sidebar({ isOpen, onClose }) {
 
 function SidebarContent({ onLinkClick }) {
     const navigate = useNavigate();
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : null;
+    const isAdmin = user?.role === 'ADMIN' || user?.role === 'ROLE_ADMIN';
+
+    const filteredNavigation = navigation; // Show all nav items to authenticated users
 
     const handleLogout = () => {
         // Clear auth data
@@ -94,7 +99,7 @@ function SidebarContent({ onLinkClick }) {
 
             {/* Navigation */}
             <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
-                {navigation.map((item) => (
+                {filteredNavigation.map((item) => (
                     <NavLink
                         key={item.name}
                         to={item.href}

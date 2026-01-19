@@ -59,6 +59,7 @@ public class Member {
     private String memberGroup; // Renamed from group to avoid SQL issues
 
     private String status; // 'Actif', 'Inactif', 'Nouveau'
+    private String addedBy;
 
     // Add other fields as needed based on frontend
 }

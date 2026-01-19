@@ -29,6 +29,9 @@ public class EventController {
 
     @PostMapping
     public Event createEvent(@RequestBody Event event) {
+        String currentUser = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        event.setAddedBy(currentUser);
         return eventRepository.save(event);
     }
 
@@ -53,6 +56,7 @@ public class EventController {
     }
 
     @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
         return eventRepository.findById(id)
                 .map(event -> {

@@ -24,6 +24,9 @@ public class TransactionController {
 
     @PostMapping
     public Transaction createTransaction(@RequestBody Transaction transaction) {
+        String currentUser = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        transaction.setAddedBy(currentUser);
         return transactionService.saveTransaction(transaction);
     }
 

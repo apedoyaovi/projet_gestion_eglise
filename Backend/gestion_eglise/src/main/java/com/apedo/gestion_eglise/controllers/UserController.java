@@ -2,10 +2,13 @@ package com.apedo.gestion_eglise.controllers;
 
 import com.apedo.gestion_eglise.entities.User;
 import com.apedo.gestion_eglise.repositories.UserRepository;
+import com.apedo.gestion_eglise.services.BackupService;
 import com.apedo.gestion_eglise.security.JwtUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +30,9 @@ public class UserController {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private BackupService backupService;
 
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(@RequestParam String email) {
@@ -111,5 +117,53 @@ public class UserController {
 
         logger.warn("Password change failed: User '{}' not found in database", email);
         return ResponseEntity.status(404).body(Map.of("message", "Utilisateur non trouvé: " + email));
+    }
+
+    @PostMapping("/create-super-member")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createSuperMember(@RequestBody Map<String, String> userData) {
+        String email = userData.get("email");
+        String fullName = userData.get("fullName");
+        String password = userData.get("password");
+
+        if (userRepository.existsByEmail(email)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Cet email est déjà utilisé."));
+        }
+
+        User user = new User(email, fullName, passwordEncoder.encode(password), "SUPER_MEMBER");
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "Super Membre créé avec succès"));
+    }
+
+    @GetMapping("/super-members")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<java.util.List<User>> getSuperMembers() {
+        return ResponseEntity.ok(userRepository.findByRole("SUPER_MEMBER"));
+    }
+
+    @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        return userRepository.findById(id)
+                .map(user -> {
+                    if ("ADMIN".equals(user.getRole())) {
+                        return ResponseEntity.badRequest()
+                                .body(Map.of("message", "Impossible de supprimer un administrateur."));
+                    }
+                    userRepository.delete(user);
+                    return ResponseEntity.ok(Map.of("message", "Utilisateur supprimé avec succès"));
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/export-data")
+    public ResponseEntity<?> exportData() {
+        logger.info("Data export requested");
+        Map<String, Object> data = backupService.exportAllData();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=eglise_backup.json")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(data);
     }
 }

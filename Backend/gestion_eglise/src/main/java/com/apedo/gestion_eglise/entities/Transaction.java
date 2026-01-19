@@ -40,4 +40,5 @@ public class Transaction {
     private String beneficiary;
 
     private String reference;
+    private String addedBy;
 }

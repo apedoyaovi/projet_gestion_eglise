@@ -61,10 +61,14 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/members/**").authenticated()
                         .requestMatchers("/api/events/**").authenticated()
-                        .requestMatchers("/api/users/**").authenticated()
-                        .requestMatchers("/api/church-config/**").authenticated()
-                        .requestMatchers("/api/schedules/**").authenticated()
                         .requestMatchers("/api/transactions/**").authenticated()
+                        .requestMatchers("/api/users/me").authenticated()
+                        .requestMatchers("/api/users/profile").authenticated()
+                        .requestMatchers("/api/users/change-password").authenticated()
+                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/church-config/**").hasRole("ADMIN")
+                        .requestMatchers("/api/schedules/**").hasRole("ADMIN")
+                        .requestMatchers("/api/backup/**").hasRole("ADMIN")
                         .anyRequest().authenticated());
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
