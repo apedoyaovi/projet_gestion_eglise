@@ -66,8 +66,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/profile").authenticated()
                         .requestMatchers("/api/users/change-password").authenticated()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/church-config/**").hasRole("ADMIN")
-                        .requestMatchers("/api/schedules/**").hasRole("ADMIN")
+                        .requestMatchers("/api/church-config/**").hasAnyRole("ADMIN", "SUPER_MEMBER")
+                        .requestMatchers("/api/schedules/**").hasAnyRole("ADMIN", "SUPER_MEMBER")
                         .requestMatchers("/api/backup/**").hasRole("ADMIN")
                         .anyRequest().authenticated());
         http.authenticationProvider(authenticationProvider());
