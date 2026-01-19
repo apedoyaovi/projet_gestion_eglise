@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { API_URLS } from '@/lib/api.jsBase';
 
 export function Login() {
     const navigate = useNavigate();
@@ -30,7 +31,7 @@ export function Login() {
         console.log("Attempting login with:", formData);
 
         try {
-            const response = await fetch('http://localhost:8080/api/auth/login', {
+            const response = await fetch(`${API_URLS.AUTH}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -86,6 +86,28 @@ public class UserController {
         return ResponseEntity.notFound().build();
     }
 
+    @PutMapping("/notifications")
+    public ResponseEntity<?> updateNotificationPreferences(@RequestBody Map<String, Object> preferences) {
+        String email = (String) preferences.get("email");
+        Optional<User> userOpt = userRepository.findByEmail(email);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (preferences.containsKey("notifyNewMembers")) {
+                user.setNotifyNewMembers((Boolean) preferences.get("notifyNewMembers"));
+            }
+            if (preferences.containsKey("notifyTransactions")) {
+                user.setNotifyTransactions((Boolean) preferences.get("notifyTransactions"));
+            }
+            if (preferences.containsKey("notifyEvents")) {
+                user.setNotifyEvents((Boolean) preferences.get("notifyEvents"));
+            }
+            userRepository.save(user);
+            return ResponseEntity.ok(user);
+        }
+        return ResponseEntity.notFound().build();
+    }
+
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(@RequestBody Map<String, String> passwordData) {
         String email = passwordData.get("email");

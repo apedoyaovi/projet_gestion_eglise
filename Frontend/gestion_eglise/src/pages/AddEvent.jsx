@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { ArrowLeft, Save, Calendar as CalendarIcon, Camera, X } from 'lucide-react';
+import { API_URLS } from '@/lib/api.jsBase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -83,7 +84,7 @@ export function AddEvent() {
                 photoCount: previews.length
             };
 
-            const response = await fetch('http://localhost:8080/api/events', {
+            const response = await fetch(API_URLS.EVENT, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -94,13 +95,15 @@ export function AddEvent() {
 
             if (response.ok) {
                 navigate('/events');
+            } else if (response.status === 413) {
+                alert("Les images sont trop lourdes. Veuillez réduire leur taille ou en sélectionner moins.");
             } else {
                 console.error("Failed to create event");
                 alert("Erreur lors de la création de l'événement.");
             }
         } catch (error) {
             console.error("Error creating event:", error);
-            alert("Une erreur est survenue.");
+            alert("Une erreur est survenue lors de la connexion au serveur.");
         } finally {
             setIsSubmitting(false);
         }

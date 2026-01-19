@@ -34,6 +34,15 @@ public class User {
 
     private String role; // ADMIN, USER
 
+    @Column(name = "notify_new_members")
+    private Boolean notifyNewMembers = true;
+
+    @Column(name = "notify_transactions")
+    private Boolean notifyTransactions = true;
+
+    @Column(name = "notify_events")
+    private Boolean notifyEvents = true;
+
     public User(String email, String fullName, String password, String role) {
         this.email = email;
         this.fullName = fullName;

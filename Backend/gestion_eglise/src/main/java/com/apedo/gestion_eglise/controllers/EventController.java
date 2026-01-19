@@ -2,6 +2,7 @@ package com.apedo.gestion_eglise.controllers;
 
 import com.apedo.gestion_eglise.entities.Event;
 import com.apedo.gestion_eglise.repositories.EventRepository;
+import com.apedo.gestion_eglise.services.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,9 @@ public class EventController {
 
     @Autowired
     private EventRepository eventRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @GetMapping
     public List<Event> getAllEvents() {
@@ -32,7 +36,12 @@ public class EventController {
         String currentUser = org.springframework.security.core.context.SecurityContextHolder.getContext()
                 .getAuthentication().getName();
         event.setAddedBy(currentUser);
-        return eventRepository.save(event);
+        Event savedEvent = eventRepository.save(event);
+        notificationService.createNotification(
+                "Nouvel événement",
+                "Événement ajouté : " + savedEvent.getTitle(),
+                "EVENT");
+        return savedEvent;
     }
 
     @PutMapping("/{id}")

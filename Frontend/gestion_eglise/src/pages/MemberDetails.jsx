@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Phone, Calendar, Mail, MapPin, Briefcase, Users, Church, Heart, Edit, Trash2, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { API_URLS } from '@/lib/api.jsBase';
 
 export function MemberDetails() {
     const { id } = useParams();
@@ -20,7 +21,7 @@ export function MemberDetails() {
                 return;
             }
 
-            const response = await fetch(`http://localhost:8080/api/members/${id}`, {
+            const response = await fetch(`${API_URLS.MEMBER}/${id}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -50,7 +51,7 @@ export function MemberDetails() {
 
         try {
             const user = JSON.parse(localStorage.getItem('user'));
-            const response = await fetch(`http://localhost:8080/api/members/${id}`, {
+            const response = await fetch(`${API_URLS.MEMBER}/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${user?.token}`
@@ -114,10 +115,12 @@ export function MemberDetails() {
                         <Edit className="mr-2 h-4 w-4" />
                         Modifier
                     </Button>
-                    <Button variant="outline" size="sm" onClick={handleDelete} className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Supprimer
-                    </Button>
+                    {JSON.parse(localStorage.getItem('user'))?.role === 'ADMIN' && (
+                        <Button variant="outline" size="sm" onClick={handleDelete} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Supprimer
+                        </Button>
+                    )}
                 </div>
             </div>
 

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { API_URLS } from '@/lib/api.jsBase';
 
 export function Settings() {
     const [schedules, setSchedules] = useState([]);
@@ -18,10 +19,7 @@ export function Settings() {
     const [profile, setProfile] = useState({ fullName: '', email: '' });
     const [security, setSecurity] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
     const [churchInfo, setChurchInfo] = useState({ churchName: '', address: '', phone: '', email: '' });
-    const [notifications, setNotifications] = useState(() => {
-        const saved = localStorage.getItem('notifications');
-        return saved ? JSON.parse(saved) : { newMembers: true, transactions: true, events: true };
-    });
+    const [notifications, setNotifications] = useState({ newMembers: true, transactions: true, events: true });
 
     useEffect(() => {
         const userStr = localStorage.getItem('user');
@@ -38,6 +36,7 @@ export function Settings() {
                 if (user.role === 'ADMIN' || user.role === 'ROLE_ADMIN') {
                     fetchSuperMembers(user.token);
                 }
+                fetchNotificationPreferences(user.email, user.token);
             } catch (e) {
                 console.error("Error parsing user from localStorage", e);
             }
@@ -75,6 +74,25 @@ export function Settings() {
             console.error("Error fetching schedules:", error);
         } finally {
             setIsLoadingSchedules(false);
+        }
+    };
+
+    const fetchNotificationPreferences = async (email, token) => {
+        if (!email || !token) return;
+        try {
+            const response = await fetch(`${API_URLS.USERS}/me?email=${email}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setNotifications({
+                    newMembers: data.notifyNewMembers,
+                    transactions: data.notifyTransactions,
+                    events: data.notifyEvents
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching notification preferences:", error);
         }
     };
 
@@ -317,10 +335,34 @@ export function Settings() {
         }
     };
 
-    const handleNotificationChange = (key) => {
-        const newData = { ...notifications, [key]: !notifications[key] };
+    const handleNotificationChange = async (key) => {
+        const mapping = {
+            newMembers: 'notifyNewMembers',
+            transactions: 'notifyTransactions',
+            events: 'notifyEvents'
+        };
+
+        const newValue = !notifications[key];
+        const newData = { ...notifications, [key]: newValue };
         setNotifications(newData);
-        localStorage.setItem('notifications', JSON.stringify(newData));
+
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const token = user?.token;
+            await fetch(`${API_URLS.USERS}/notifications`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    email: user.email,
+                    [mapping[key]]: newValue
+                })
+            });
+        } catch (error) {
+            console.error("Error updating notification preference:", error);
+        }
     };
 
     const handleExportData = async () => {

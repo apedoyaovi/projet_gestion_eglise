@@ -2,6 +2,7 @@ package com.apedo.gestion_eglise.controllers;
 
 import com.apedo.gestion_eglise.entities.Member;
 import com.apedo.gestion_eglise.services.MemberService;
+import com.apedo.gestion_eglise.services.NotificationService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,9 @@ import java.util.List;
 public class MemberController {
     @Autowired
     MemberService memberService;
+
+    @Autowired
+    private NotificationService notificationService;
 
     @GetMapping
     public List<Member> getAllMembers() {
@@ -32,7 +36,12 @@ public class MemberController {
         String currentUser = org.springframework.security.core.context.SecurityContextHolder.getContext()
                 .getAuthentication().getName();
         member.setAddedBy(currentUser);
-        return memberService.saveMember(member);
+        Member savedMember = memberService.saveMember(member);
+        notificationService.createNotification(
+                "Nouveau membre",
+                "Un nouveau membre a été ajouté : " + savedMember.getFirstName() + " " + savedMember.getLastName(),
+                "MEMBER");
+        return savedMember;
     }
 
     @PutMapping("/{id}")
