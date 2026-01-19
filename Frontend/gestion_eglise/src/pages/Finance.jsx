@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Wallet, Building2, ArrowUpRight, ArrowDownRight, Printer, RefreshCw } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { Plus, Wallet, Building2, ArrowUpRight, ArrowDownRight, Printer, RefreshCw, Search } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import {
     Table,
@@ -25,6 +28,10 @@ export function Finance() {
         totalBalance: 0
     });
     const [isLoading, setIsLoading] = useState(true);
+    const [incomeSearch, setIncomeSearch] = useState('');
+    const [expenseSearch, setExpenseSearch] = useState('');
+    const [visibleIncomes, setVisibleIncomes] = useState(5);
+    const [visibleExpenses, setVisibleExpenses] = useState(5);
 
     const fetchData = async () => {
         setIsLoading(true);
@@ -64,10 +71,6 @@ export function Finance() {
         fetchData();
     }, []);
 
-    // Derived state for the Ledger View
-    const incomes = transactions.filter(t => t.type === 'INCOME');
-    const expenses = transactions.filter(t => t.type === 'EXPENSE');
-
     const {
         soldeCaisseAnterieur,
         soldeBanqueAnterieur,
@@ -77,6 +80,102 @@ export function Finance() {
         totalExpense
     } = stats;
 
+    // Filter and Paginate Incomes
+    const filteredIncomes = transactions
+        .filter(t => t.type === 'INCOME')
+        .filter(t =>
+            (t.category?.toLowerCase() || '').includes(incomeSearch.toLowerCase()) ||
+            (t.date?.toLowerCase() || '').includes(incomeSearch.toLowerCase()) ||
+            (t.amount?.toString() || '').includes(incomeSearch.toLowerCase())
+        );
+    const displayedIncomes = filteredIncomes.slice(0, visibleIncomes);
+
+    // Filter and Paginate Expenses
+    const filteredExpenses = transactions
+        .filter(t => t.type === 'EXPENSE')
+        .filter(t =>
+            (t.description?.toLowerCase() || '').includes(expenseSearch.toLowerCase()) ||
+            (t.date?.toLowerCase() || '').includes(expenseSearch.toLowerCase()) ||
+            (t.amount?.toString() || '').includes(expenseSearch.toLowerCase())
+        );
+    const displayedExpenses = filteredExpenses.slice(0, visibleExpenses);
+
+    const formatAmount = (amount) => {
+        if (amount === undefined || amount === null) amount = 0;
+        // Regex simple pour les milliers avec un espace standard pour éviter les caractères parasites dans le PDF
+        return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + ' FCFA';
+    };
+
+    const exportToPDF = () => {
+        try {
+            const doc = new jsPDF();
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('fr-FR');
+
+            // Header
+            doc.setFontSize(18);
+            doc.text('Journal de Trésorerie', 105, 15, { align: 'center' });
+            doc.setFontSize(10);
+            doc.text(`Date d'exportation: ${dateStr}`, 105, 22, { align: 'center' });
+
+            // Summary Info
+            doc.setFontSize(12);
+            doc.text(`Solde Caisse: ${formatAmount(currentCaisseBalance)}`, 14, 35);
+            doc.text(`Solde Banque: ${formatAmount(currentBanqueBalance)}`, 14, 42);
+            doc.text(`Total Disponible: ${formatAmount(currentCaisseBalance + currentBanqueBalance)}`, 14, 49);
+
+            // Incomes Table
+            doc.setFontSize(14);
+            doc.setTextColor(34, 197, 94); // Green
+            doc.text('RESSOURCES (Entrées)', 14, 65);
+
+            const incomeRows = filteredIncomes.map(item => [
+                item.date,
+                item.category,
+                formatAmount(item.amount)
+            ]);
+
+            autoTable(doc, {
+                startY: 70,
+                head: [['Date', 'Libellé', 'Montant']],
+                body: incomeRows.length > 0 ? incomeRows : [['---', 'Aucune donnée', '0 FCFA']],
+                headStyles: { fillColor: [34, 197, 94] },
+                columnStyles: {
+                    2: { halign: 'left' }
+                },
+                margin: { left: 14, right: 14 }
+            });
+
+            // Expenses Table
+            const finalY = (doc.lastAutoTable?.finalY || 80) + 15;
+            doc.setFontSize(14);
+            doc.setTextColor(239, 68, 68); // Red
+            doc.text('EMPLOIS (Sorties)', 14, finalY);
+
+            const expenseRows = filteredExpenses.map(item => [
+                item.date,
+                item.description,
+                formatAmount(item.amount)
+            ]);
+
+            autoTable(doc, {
+                startY: finalY + 5,
+                head: [['Date', 'Désignation', 'Montant']],
+                body: expenseRows.length > 0 ? expenseRows : [['---', 'Aucune donnée', '0 FCFA']],
+                headStyles: { fillColor: [239, 68, 68] },
+                columnStyles: {
+                    2: { halign: 'left' }
+                },
+                margin: { left: 14, right: 14 }
+            });
+
+            doc.save(`journal_finance_${dateStr.replace(/\//g, '-')}.pdf`);
+        } catch (error) {
+            console.error("PDF Export Error:", error);
+            alert("Erreur lors de la génération du PDF. Vérifiez la console.");
+        }
+    };
+
     return (
         <div className="space-y-4 md:space-y-6">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -85,10 +184,10 @@ export function Finance() {
                     <p className="text-sm md:text-base text-muted-foreground">Gestion des entrées (Ressources) et sorties (Emplois).</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" className="flex-1 sm:flex-none text-sm">
+                    <Button variant="outline" className="flex-1 sm:flex-none text-sm" onClick={exportToPDF}>
                         <Printer className="mr-2 h-4 w-4" />
-                        <span className="hidden sm:inline">Imprimer Journal</span>
-                        <span className="sm:hidden">Imprimer</span>
+                        <span className="hidden sm:inline">Exporter Journal PDF</span>
+                        <span className="sm:hidden">PDF</span>
                     </Button>
                     <Button
                         variant="outline"
@@ -119,8 +218,8 @@ export function Finance() {
                         <Wallet className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{currentCaisseBalance.toLocaleString()} FCFA</div>
-                        <p className="text-xs text-muted-foreground">Initial: {soldeCaisseAnterieur.toLocaleString()}</p>
+                        <div className="text-2xl font-bold">{formatAmount(currentCaisseBalance)}</div>
+                        <p className="text-xs text-muted-foreground">Initial: {formatAmount(soldeCaisseAnterieur)}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -129,8 +228,8 @@ export function Finance() {
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{currentBanqueBalance.toLocaleString()} FCFA</div>
-                        <p className="text-xs text-muted-foreground">Initial: {soldeBanqueAnterieur.toLocaleString()}</p>
+                        <div className="text-2xl font-bold">{formatAmount(currentBanqueBalance)}</div>
+                        <p className="text-xs text-muted-foreground">Initial: {formatAmount(soldeBanqueAnterieur)}</p>
                     </CardContent>
                 </Card>
                 <Card className="bg-blue-50 border-blue-100">
@@ -139,7 +238,7 @@ export function Finance() {
                         <Wallet className="h-4 w-4 text-blue-700" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-blue-700">{(currentCaisseBalance + currentBanqueBalance).toLocaleString()} FCFA</div>
+                        <div className="text-2xl font-bold text-blue-700">{formatAmount(currentCaisseBalance + currentBanqueBalance)}</div>
                         <p className="text-xs text-blue-600">Caisse + Fucec</p>
                     </CardContent>
                 </Card>
@@ -149,9 +248,18 @@ export function Finance() {
             <div className="grid gap-6 md:grid-cols-2">
                 <Card className="border-green-100">
                     <CardHeader className="bg-green-50/50 pb-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-2">
                             <CardTitle className="text-green-700">RESSOURCES (Entrées)</CardTitle>
-                            <span className="text-sm font-bold text-green-700">Total: {totalIncome.toLocaleString()}</span>
+                            <span className="text-sm font-bold text-green-700">Total: {formatAmount(totalIncome)}</span>
+                        </div>
+                        <div className="relative">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Rechercher une recette..."
+                                className="pl-8 h-9"
+                                value={incomeSearch}
+                                onChange={(e) => setIncomeSearch(e.target.value)}
+                            />
                         </div>
                     </CardHeader>
                     <CardContent className="p-0">
@@ -164,23 +272,52 @@ export function Finance() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {incomes.map(item => (
-                                    <TableRow key={item.id}>
-                                        <TableCell>{item.date}</TableCell>
-                                        <TableCell>{item.category}</TableCell>
-                                        <TableCell className="text-right font-medium text-green-600">+{item.amount.toLocaleString()}</TableCell>
+                                {displayedIncomes.length > 0 ? (
+                                    displayedIncomes.map(item => (
+                                        <TableRow key={item.id}>
+                                            <TableCell>{item.date}</TableCell>
+                                            <TableCell>{item.category}</TableCell>
+                                            <TableCell className="text-right font-medium text-green-600">+{formatAmount(item.amount)}</TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                                            Aucune recette trouvée
+                                        </TableCell>
                                     </TableRow>
-                                ))}
+                                )}
                             </TableBody>
                         </Table>
+                        {filteredIncomes.length > visibleIncomes && (
+                            <div className="p-4 border-t text-center">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-green-700 hover:text-green-800 hover:bg-green-50"
+                                    onClick={() => setVisibleIncomes(prev => prev + 5)}
+                                >
+                                    Voir plus ({filteredIncomes.length - visibleIncomes} restants)
+                                </Button>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
                 <Card className="border-red-100">
                     <CardHeader className="bg-red-50/50 pb-3">
-                        <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between mb-2">
                             <CardTitle className="text-red-700">EMPLOIS (Sorties)</CardTitle>
-                            <span className="text-sm font-bold text-red-700">Total: {totalExpense.toLocaleString()}</span>
+                            <span className="text-sm font-bold text-red-700">Total: {formatAmount(totalExpense)}</span>
+                        </div>
+                        <div className="relative">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Rechercher une dépense..."
+                                className="pl-8 h-9"
+                                value={expenseSearch}
+                                onChange={(e) => setExpenseSearch(e.target.value)}
+                            />
                         </div>
                     </CardHeader>
                     <CardContent className="p-0">
@@ -193,15 +330,35 @@ export function Finance() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {expenses.map(item => (
-                                    <TableRow key={item.id}>
-                                        <TableCell>{item.date}</TableCell>
-                                        <TableCell>{item.description}</TableCell>
-                                        <TableCell className="text-right font-medium text-red-600">-{item.amount.toLocaleString()}</TableCell>
+                                {displayedExpenses.length > 0 ? (
+                                    displayedExpenses.map(item => (
+                                        <TableRow key={item.id}>
+                                            <TableCell>{item.date}</TableCell>
+                                            <TableCell>{item.description}</TableCell>
+                                            <TableCell className="text-right font-medium text-red-600">-{formatAmount(item.amount)}</TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                                            Aucune dépense trouvée
+                                        </TableCell>
                                     </TableRow>
-                                ))}
+                                )}
                             </TableBody>
                         </Table>
+                        {filteredExpenses.length > visibleExpenses && (
+                            <div className="p-4 border-t text-center">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-700 hover:text-red-800 hover:bg-red-50"
+                                    onClick={() => setVisibleExpenses(prev => prev + 5)}
+                                >
+                                    Voir plus ({filteredExpenses.length - visibleExpenses} restants)
+                                </Button>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
