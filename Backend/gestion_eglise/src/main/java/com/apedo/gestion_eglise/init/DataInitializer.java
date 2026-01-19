@@ -30,5 +30,26 @@ public class DataInitializer implements CommandLineRunner {
         } else {
             System.out.println("Admin user already exists, skipping initialization.");
         }
+
+        // Migrate existing users with null notification preferences
+        userRepository.findAll().forEach(user -> {
+            boolean updated = false;
+            if (user.getNotifyNewMembers() == null) {
+                user.setNotifyNewMembers(true);
+                updated = true;
+            }
+            if (user.getNotifyTransactions() == null) {
+                user.setNotifyTransactions(true);
+                updated = true;
+            }
+            if (user.getNotifyEvents() == null) {
+                user.setNotifyEvents(true);
+                updated = true;
+            }
+            if (updated) {
+                userRepository.save(user);
+                System.out.println("Updated notification preferences for user: " + user.getEmail());
+            }
+        });
     }
 }

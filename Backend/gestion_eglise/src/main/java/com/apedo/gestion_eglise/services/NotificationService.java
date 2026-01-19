@@ -24,13 +24,13 @@ public class NotificationService {
             boolean shouldNotify = false;
             switch (type) {
                 case "MEMBER":
-                    shouldNotify = Boolean.TRUE.equals(user.getNotifyNewMembers());
+                    shouldNotify = user.getNotifyNewMembers() == null || user.getNotifyNewMembers();
                     break;
                 case "FINANCE":
-                    shouldNotify = Boolean.TRUE.equals(user.getNotifyTransactions());
+                    shouldNotify = user.getNotifyTransactions() == null || user.getNotifyTransactions();
                     break;
                 case "EVENT":
-                    shouldNotify = Boolean.TRUE.equals(user.getNotifyEvents());
+                    shouldNotify = user.getNotifyEvents() == null || user.getNotifyEvents();
                     break;
             }
 

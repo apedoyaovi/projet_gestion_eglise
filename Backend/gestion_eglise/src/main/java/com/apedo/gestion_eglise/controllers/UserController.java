@@ -153,6 +153,9 @@ public class UserController {
         }
 
         User user = new User(email, fullName, passwordEncoder.encode(password), "SUPER_MEMBER");
+        user.setNotifyNewMembers(true);
+        user.setNotifyTransactions(true);
+        user.setNotifyEvents(true);
         userRepository.save(user);
 
         return ResponseEntity.ok(Map.of("message", "Super Membre créé avec succès"));
